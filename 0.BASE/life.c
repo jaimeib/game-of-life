@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 
 	int size = 11, steps = 7;
 	FILE *f;
-	char source[32] = "life.in";
+	char source[32] = "../DATA/life.in";
 	int i, j;
 
 	//      f = stdin;
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 
 	if ((f = fopen(source, "r")) == NULL)
 	{
-		printf("Error: No puedo abrir el fichero %s\n", source);
+		printf("Error: Cannot open file %s\n", source);
 		exit(1);
 	}
 
@@ -191,8 +191,6 @@ int main(int argc, char *argv[])
 	printf("----------\n");
 #endif
 
-	/* Start of the parallel program */
-
 	for (i = 0; i < steps; i++)
 	{
 		play(prev, next, size);
@@ -204,8 +202,6 @@ int main(int argc, char *argv[])
 		next = prev;
 		prev = tmp;
 	}
-
-	/* End of the parallel program */
 
 #ifdef DEBUG
 	print(prev, size);

@@ -274,12 +274,11 @@ int main(int argc, char *argv[])
 		sendcounts = (int *)malloc(nprocs * sizeof(int));
 		displs = (int *)malloc(nprocs * sizeof(int));
 
+		// Process 0 has the first block
 		sendcounts[0] = local_rows * local_cols;
 		displs[0] = 0;
 
-		sendcounts[nprocs - 1] = local_rows * local_cols;
-		displs[nprocs - 1] = (size - local_rows) * local_cols;
-
+		// Middle processes have the block plus 2 rows
 		for (i = 1; i < nprocs - 1; i++)
 		{
 			// The send count is the number of elements of the process block + additional row that is shared with the previous process
@@ -287,6 +286,11 @@ int main(int argc, char *argv[])
 			// The displacement is the previous displacement plus the number of elements of the previous process block - 2 rows
 			displs[i] = displs[i - 1] + sendcounts[i - 1] - TWO_ADJACENT_ROWS * local_cols;
 		}
+
+		// The last process has the remaining block plus 1 row
+		int last_block_rows = size - (local_rows - 1) * (nprocs - 1) + ONE_ADJACENT_ROWS;
+		sendcounts[nprocs - 1] = last_block_rows * local_cols;
+		displs[nprocs - 1] = displs[nprocs - 2] + sendcounts[nprocs - 2] - TWO_ADJACENT_ROWS * local_cols;
 	}
 
 	// Print the sendcounts and displacements

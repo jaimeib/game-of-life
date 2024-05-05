@@ -159,6 +159,25 @@ void read_file(FILE *f, cell_t *board, int size)
 }
 
 /**
+ * @brief read the numbers board from a file
+ *
+ */
+void read_numbers(FILE *f, cell_t *board, int size)
+{
+	// Read a file that contains only numbers as input
+	// 1 2 3 4 5 6 7 8 9
+	int i, j;
+
+	for (i = 0; i < size; i++)
+	{
+		for (j = 0; j < size; j++)
+		{
+			fscanf(f, "%d", &board[i * size + j]);
+		}
+	}
+}
+
+/**
  * @brief Main function
  *
  * @param argc number of arguments
@@ -183,6 +202,8 @@ int main(int argc, char *argv[])
 	cell_t *prev, *next, *tmp;
 	cell_t *board, *local_board;
 
+	int *sendcounts, *displs;
+
 	// Variables to store the size of the block for each process
 	int local_rows, local_cols;
 
@@ -200,10 +221,20 @@ int main(int argc, char *argv[])
 	local_rows = size / nprocs;
 	local_cols = size;
 
-	// Allocate memory for the board of the last process
+	// Compute the size of the block of the last process
 	if (rank == nprocs - 1)
 	{
 		local_rows = size - local_rows * (nprocs - 1);
+	}
+
+	// Add the adjacent rows depending on the rank
+	if (rank == 0 || rank == nprocs - 1)
+	{
+		local_rows += ONE_ADJACENT_ROWS;
+	}
+	else
+	{
+		local_rows += TWO_ADJACENT_ROWS;
 	}
 
 	// Read the input file (only rank 0)
@@ -224,8 +255,56 @@ int main(int argc, char *argv[])
 		board = allocate_board(size, size);
 
 		// Read the board from the file
-		read_file(f, board, size);
+		read_numbers(f, board, size);
+
+		// Print the board
+		printf("Initial board\n");
+
+		for (i = 0; i < size; i++)
+		{
+			for (j = 0; j < size; j++)
+			{
+				printf("%d ", board[i * size + j]);
+			}
+			printf("\n");
+		}
 		fclose(f);
+
+		// Compute the send counts and displacements for each process to scatter(v)	the board
+		sendcounts = (int *)malloc(nprocs * sizeof(int));
+		displs = (int *)malloc(nprocs * sizeof(int));
+
+		sendcounts[0] = local_rows * local_cols;
+		displs[0] = 0;
+
+		sendcounts[nprocs - 1] = local_rows * local_cols;
+		displs[nprocs - 1] = (size - local_rows) * local_cols;
+
+		for (i = 1; i < nprocs - 1; i++)
+		{
+			// The send count is the number of elements of the process block + additional row that is shared with the previous process
+			sendcounts[i] = (local_rows + ONE_ADJACENT_ROWS) * local_cols;
+			// The displacement is the previous displacement plus the number of elements of the previous process block - 2 rows
+			displs[i] = displs[i - 1] + sendcounts[i - 1] - TWO_ADJACENT_ROWS * local_cols;
+		}
+	}
+
+	// Print the sendcounts and displacements
+	if (rank == 0)
+	{
+		printf("Sendcounts: ");
+		for (i = 0; i < nprocs; i++)
+		{
+			printf("%d ", sendcounts[i]);
+		}
+		printf("\n");
+
+		printf("Displacements: ");
+		for (i = 0; i < nprocs; i++)
+		{
+			printf("%d ", displs[i]);
+		}
+		printf("\n");
 	}
 
 	// Allocate memory for the local board
@@ -234,7 +313,7 @@ int main(int argc, char *argv[])
 	printf("Rank %d: local_rows %d, local_cols %d\n", rank, local_rows, local_cols);
 
 	// Scatter the board data
-	MPI_Scatter(board, local_rows * local_cols, MPI_CHAR, local_board, local_rows * local_cols, MPI_CHAR, 0, MPI_COMM_WORLD);
+	MPI_Scatterv(board, sendcounts, displs, MPI_CHAR, local_board, local_rows * local_cols, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 	// Each process processes its portion of the board (e.g., print)
 	for (i = 0; i < local_rows; i++)

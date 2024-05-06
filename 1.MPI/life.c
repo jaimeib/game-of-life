@@ -30,12 +30,12 @@ typedef unsigned char cell_t;
  * @brief Allocate memory for the board
  *
  * @param size_rows size of the board
- * @param size_columns size of the board
+ * @param size_cols size of the board
  * @return cell_t** pointer to the board
  */
-cell_t *allocate_board(int size_rows, int size_columns)
+cell_t *allocate_board(int size_rows, int size_cols)
 {
-	cell_t *board = (cell_t *)malloc(size_rows * size_columns * sizeof(cell_t));
+	cell_t *board = (cell_t *)malloc(size_rows * size_cols * sizeof(cell_t));
 	if (board == NULL)
 	{
 		printf("Error: Cannot allocate memory for the board\n");
@@ -58,24 +58,24 @@ void free_board(cell_t *board)
  * @brief Return the number of on cells adjacent to the i,j cell
  *
  * @param board board to check
- * @param size size of the board (size x size)
+ * @param size_cols size of the board columns
  * @param i row of the cell
  * @param j column of the cell
  * @return int number of on cells adjacent to the i,j cell
  */
-int adjacent_to(cell_t *board, int size, int i, int j)
+int adjacent_to(cell_t *board, int size_cols, int i, int j)
 {
 	int k, l, count = 0;
 
 	int sk = (i > 0) ? i - 1 : i;
-	int ek = (i + 1 < size) ? i + 1 : i;
+	int ek = (i + 1 < size_cols) ? i + 1 : i;
 	int sl = (j > 0) ? j - 1 : j;
-	int el = (j + 1 < size) ? j + 1 : j;
+	int el = (j + 1 < size_cols) ? j + 1 : j;
 
 	for (k = sk; k <= ek; k++)
 		for (l = sl; l <= el; l++)
-			count += board[k * size + l];
-	count -= board[i * size + j];
+			count += board[k * size_cols + l];
+	count -= board[i * size_cols + j];
 
 	return count;
 }
@@ -85,28 +85,30 @@ int adjacent_to(cell_t *board, int size, int i, int j)
  *
  * @param board board to apply the rules
  * @param newboard new board to store the result
- * @param size size of the board (size x size)
+ * @param size_cols size of the board
+ * @param start start row
+ * @param end end row
  */
-void play(cell_t *board, cell_t *newboard, int size)
+void play(cell_t *board, cell_t *newboard, int size_cols, int start, int end)
 {
 	int i, j, a;
 	/* for each cell, apply the rules of Life */
-	for (i = 0; i < size; i++)
-		for (j = 0; j < size; j++)
+	for (i = start; i < end; i++)
+		for (j = 0; j < size_cols; j++)
 		{
-			a = adjacent_to(board, size, i, j);
+			a = adjacent_to(board, size_cols, i, j);
 			/* If a == 2, the cell keeps the same */
 			if (a == 2)
-				newboard[i * size + j] = board[i * size + j];
+				newboard[i * size_cols + j] = board[i * size_cols + j];
 			/* If a == 3, then cell lives */
 			if (a == 3)
-				newboard[i * size + j] = 1;
+				newboard[i * size_cols + j] = 1;
 			/* If a < 2, then cell dies */
 			if (a < 2)
-				newboard[i * size + j] = 0;
+				newboard[i * size_cols + j] = 0;
 			/* If a > 3, then cell dies */
 			if (a > 3)
-				newboard[i * size + j] = 0;
+				newboard[i * size_cols + j] = 0;
 		}
 }
 
@@ -172,7 +174,7 @@ void read_numbers(FILE *f, cell_t *board, int size)
 	{
 		for (j = 0; j < size; j++)
 		{
-			fscanf(f, "%d", &board[i * size + j]);
+			fscanf(f, "%hhd", &board[i * size + j]);
 		}
 	}
 }
@@ -186,7 +188,6 @@ void read_numbers(FILE *f, cell_t *board, int size)
  */
 int main(int argc, char *argv[])
 {
-
 	// MPI variables for rank and number of processes
 	int rank, nprocs;
 
@@ -199,13 +200,15 @@ int main(int argc, char *argv[])
 	FILE *f;
 	char source[32] = "../DATA/life.in";
 	int i, j;
-	cell_t *prev, *next, *tmp;
-	cell_t *board, *local_board;
+	cell_t *board, *local_prev, *local_next, *local_tmp;
 
 	int *sendcounts, *displs;
 
 	// Variables to store the size of the block for each process
 	int local_rows, local_cols;
+
+	// Define start and end of the block for each process
+	int start, end;
 
 	size = atoi(argv[2]);
 	steps = atoi(argv[3]);
@@ -255,19 +258,12 @@ int main(int argc, char *argv[])
 		board = allocate_board(size, size);
 
 		// Read the board from the file
-		read_numbers(f, board, size);
+		read_file(f, board, size);
 
 		// Print the board
 		printf("Initial board\n");
+		print(board, size);
 
-		for (i = 0; i < size; i++)
-		{
-			for (j = 0; j < size; j++)
-			{
-				printf("%d ", board[i * size + j]);
-			}
-			printf("\n");
-		}
 		fclose(f);
 
 		// Compute the send counts and displacements for each process to scatter(v)	the board
@@ -312,12 +308,13 @@ int main(int argc, char *argv[])
 	}
 
 	// Allocate memory for the local board
-	local_board = allocate_board(local_rows, local_cols);
+	local_prev = allocate_board(local_rows, local_cols);
+	local_next = allocate_board(local_rows, local_cols);
 
 	printf("Rank %d: local_rows %d, local_cols %d\n", rank, local_rows, local_cols);
 
 	// Scatter the board data
-	MPI_Scatterv(board, sendcounts, displs, MPI_CHAR, local_board, local_rows * local_cols, MPI_CHAR, 0, MPI_COMM_WORLD);
+	MPI_Scatterv(board, sendcounts, displs, MPI_CHAR, local_prev, local_rows * local_cols, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 	// Each process processes its portion of the board (e.g., print)
 	for (i = 0; i < local_rows; i++)
@@ -325,32 +322,85 @@ int main(int argc, char *argv[])
 		printf("Process %d, Row %d: ", rank, i);
 		for (j = 0; j < local_cols; j++)
 		{
-			printf("%d ", local_board[i * local_cols + j]);
+			printf("%d ", local_prev[i * local_cols + j]);
 		}
 		printf("\n");
 	}
 
-	// #ifdef DEBUG
-	// 	printf("Initial \n");
-	// 	print(prev, size);
-	// 	printf("----------\n");
-	// #endif
+	// Calculate the start and end of the block for each process
+	if (rank == 0)
+	{
+		start = 0;
+		end = local_rows - 1;
+	}
+	else if (rank == nprocs - 1)
+	{
+		start = 1;
+		end = local_rows;
+	}
+	else
+	{
+		start = 1;
+		end = local_rows - 2;
+	}
 
-	// 	for (i = 0; i < steps; i++)
-	// 	{
-	// 		play(prev, next, size);
-	// #ifdef DEBUG
-	// 		printf("%d ----------\n", i);
-	// 		print(next, size);
-	// #endif
-	// 		tmp = next;
-	// 		next = prev;
-	// 		prev = tmp;
-	// 	}
+	for (i = 0; i < steps; i++)
+	{
+
+		play(local_prev, local_next, local_cols, start, end);
+
+#ifdef DEBUG
+		printf("%d ----------\n", i);
+		print(next, size);
+#endif
+
+		local_tmp = local_prev;
+		local_prev = local_next;
+		local_next = local_tmp;
+
+		// Sincrhonize the shared rows
+		if (rank == 0)
+		{
+			// The first process sends the last row (end row) to the next process
+			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+			// The first process receives the last row of the next process
+			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+
+		if (rank == nprocs - 1)
+		{
+			// The last process sends the first row (start row) to the previous process
+			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+			// The last process receives the first row of the previous process
+			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+
+		if (rank > 0 && rank < nprocs - 1)
+		{
+			// The middle processes send the first row (start row) to the previous process
+			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+			// The middle processes receive the first row of the previous process
+			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+			// The middle processes send the last row (end row) to the next process
+			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+			// The middle processes receive the last row of the next process
+			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+	}
 
 	// #ifdef DEBUG
-	// If DEBUG is defined, print the board, so we need to Gather the board to rank 0
-	// 	print(prev, size);
+
+	// Gather the board data
+	MPI_Gatherv(local_prev, local_rows * local_cols, MPI_CHAR, board, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+	if (rank == 0)
+	{
+		// Print the board
+		printf("Final board\n");
+		print(board, size);
+	}
+
 	// #endif
 
 	// Free memory
@@ -358,7 +408,8 @@ int main(int argc, char *argv[])
 	{
 		free_board(board);
 	}
-	free_board(local_board);
+	free_board(local_prev);
+	free_board(local_next);
 
 	// Finalize MPI environment
 	MPI_Finalize();

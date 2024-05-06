@@ -354,16 +354,29 @@ int main(int argc, char *argv[])
 		print(next, size);
 #endif
 
-		local_tmp = local_prev;
-		local_prev = local_next;
-		local_next = local_tmp;
+		local_tmp = local_next;
+		local_next = local_prev;
+		local_prev = local_tmp;
 
 		// Sincrhonize the shared rows
 		if (rank == 0)
 		{
 			// The first process sends the last row (end row) to the next process
 			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-			// The first process receives the last row of the next process
+			// The first process receives the last row of the next process (end row)
+			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+
+		if (rank > 0 && rank < nprocs - 1)
+		{
+			// The middle processes send the first row (start row) to the previous process
+			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+			// The middle processes receive the first row of the previous process (start row)
+			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+			// The middle processes send the last row (end row) to the next process
+			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+			// The middle processes receive the last row of the next process (end row)
 			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
@@ -371,21 +384,8 @@ int main(int argc, char *argv[])
 		{
 			// The last process sends the first row (start row) to the previous process
 			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-			// The last process receives the first row of the previous process
+			// The last process receives the first row of the previous process (start row)
 			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		}
-
-		if (rank > 0 && rank < nprocs - 1)
-		{
-			// The middle processes send the first row (start row) to the previous process
-			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-			// The middle processes receive the first row of the previous process
-			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-			// The middle processes send the last row (end row) to the next process
-			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-			// The middle processes receive the last row of the next process
-			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 	}
 

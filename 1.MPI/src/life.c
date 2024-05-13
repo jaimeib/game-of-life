@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 
 	int size = 11, steps = 7;
 	FILE *f;
-	char source[32] = "../DATA/life.in";
+	char source[32] = "../DATA/in/life.in";
 	int i, j;
 	cell_t *board, *local_prev, *local_next, *local_tmp;
 
@@ -260,9 +260,14 @@ int main(int argc, char *argv[])
 		// Read the board from the file
 		read_file(f, board, size);
 
+#ifdef PRINT_RESULT
+
 		// Print the board
-		printf("Initial board\n");
+		printf("--- Initial board ---\n");
 		print(board, size);
+		printf("---------------------\n\n");
+
+#endif
 
 		fclose(f);
 
@@ -289,6 +294,8 @@ int main(int argc, char *argv[])
 		displs[nprocs - 1] = displs[nprocs - 2] + sendcounts[nprocs - 2] - TWO_ADJACENT_ROWS * local_cols;
 	}
 
+#ifdef DEBUG
+
 	// Print the sendcounts and displacements
 	if (rank == 0)
 	{
@@ -307,14 +314,23 @@ int main(int argc, char *argv[])
 		printf("\n");
 	}
 
+#endif
+
 	// Allocate memory for the local board
 	local_prev = allocate_board(local_rows, local_cols);
 	local_next = allocate_board(local_rows, local_cols);
 
+#ifdef DEBUG
+
+	// Print the size of the local board
 	printf("Rank %d: local_rows %d, local_cols %d\n", rank, local_rows, local_cols);
+
+#endif
 
 	// Scatter the board data
 	MPI_Scatterv(board, sendcounts, displs, MPI_CHAR, local_prev, local_rows * local_cols, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+#ifdef DEBUG
 
 	// Each process processes its portion of the board (e.g., print)
 	for (i = 0; i < local_rows; i++)
@@ -322,10 +338,12 @@ int main(int argc, char *argv[])
 		printf("Process %d, Row %d: ", rank, i);
 		for (j = 0; j < local_cols; j++)
 		{
-			printf("%d ", local_prev[i * local_cols + j]);
+			printf("%d", local_prev[i * local_cols + j]);
 		}
 		printf("\n");
 	}
+
+#endif
 
 	// Calculate the start and end of the block for each process
 	if (rank == 0)
@@ -349,9 +367,18 @@ int main(int argc, char *argv[])
 
 		play(local_prev, local_next, local_cols, start, end);
 
-#ifdef DEBUG
-		printf("%d ----------\n", i);
-		print(next, size);
+#ifdef PRINT
+
+		// Gather the board data
+		MPI_Gatherv(local_next, local_rows * local_cols, MPI_CHAR, board, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		if (rank == 0)
+		{
+			printf("--- Iteration %d ---\n", i);
+			print(local_next, size);
+			printf("--------------------\n\n");
+		}
+
 #endif
 
 		local_tmp = local_next;
@@ -389,19 +416,66 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// #ifdef DEBUG
+#if defined(PRINT_RESULT) || defined(OUTPUT)
 
 	// Gather the board data
 	MPI_Gatherv(local_prev, local_rows * local_cols, MPI_CHAR, board, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
 
+#endif
+
+#ifdef PRINT_RESULT
 	if (rank == 0)
 	{
 		// Print the board
-		printf("Final board\n");
+		printf("--- Final board ---\n");
 		print(board, size);
+		printf("-------------------\n\n");
 	}
 
-	// #endif
+#endif
+
+#ifdef OUTPUT
+
+	// Save the board to a file
+	if (rank == 0)
+	{
+		FILE *f;
+		// The file is <source>-mpi-<size>-<steps>.out
+		char filename[32];
+
+		// The source file is the first argument change "in" to "out" from the path and remove the extension
+		strcpy(filename, source);
+		char *dot = strrchr(filename, '.');
+		if (dot != NULL)
+		{
+			*dot = '\0';
+		}
+		char *in = strstr(filename, "in");
+		strcpy(in, "out");
+
+		// Add the size and steps to the filename
+		sprintf(filename, "%s-mpi-%d-%d.out", filename, size, steps);
+
+		// Open the file for writing or create it if it does not exist
+		if ((f = fopen(filename, "w")) == NULL)
+		{
+			printf("Error: Cannot open file %s\n", filename);
+			exit(1);
+		}
+
+		// Print the board to the file
+		for (j = 0; j < size; j++)
+		{
+			for (i = 0; i < size; i++)
+			{
+				fprintf(f, "%c", board[i * size + j] ? 'x' : ' ');
+			}
+			fprintf(f, "\n");
+		}
+
+		fclose(f);
+	}
+#endif
 
 	// Free memory
 	if (rank == 0)

@@ -83,6 +83,11 @@ OPENMP_DEBUG: PARALLEL/src/life.c
 	mkdir -p PARALLEL/bin
 	$(MPICC) -o PARALLEL/bin/life_debug_openmp PARALLEL/src/life.c -DDEBUG -fopenmp
 
+################################################################
+# COMPARE RESULTS:
+# diff -qs DATA/out/life.out DATA/out/life-mpi.out
+################################################################
+
 clean:
 	rm -f BASE/bin/*
 	rm -f PARALLEL/bin/*

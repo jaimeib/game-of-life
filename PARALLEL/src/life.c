@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
 	int size = 11, steps = 7;
 	FILE *f;
-	char source[32] = "../DATA/in/life.in";
+	char source[32];
 	int i, j;
 	cell_t *board, *local_prev, *local_next, *local_tmp;
 
@@ -203,6 +203,13 @@ int main(int argc, char *argv[])
 
 	// Define start and end of the block for each process
 	int start, end;
+
+	// Get the arguments
+	if (argc < 4)
+	{
+		printf("Usage: mpirun -np [N] life [<input file>] [size] [steps]\n");
+		exit(1);
+	}
 
 	size = atoi(argv[2]);
 	steps = atoi(argv[3]);
@@ -240,7 +247,16 @@ int main(int argc, char *argv[])
 		// f = stdin;
 		// scanf(f,"%d %d", &size, &steps);
 
-		strcpy(source, argv[1]);
+		// Get the source file from the arguments
+		if (argc >= 4)
+		{
+			strcpy(source, argv[1]);
+		}
+		else
+		{
+			printf("Error: No source file specified\n");
+			exit(1);
+		}
 
 		if ((f = fopen(source, "r")) == NULL)
 		{
@@ -440,6 +456,43 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef OUTPUT
+
+	// Write the board to a file
+	if (rank == 0)
+	{
+		FILE *out_file;
+		char dest[32];
+
+		// Get the destination file from the arguments
+		if (argc == 5)
+		{
+			strcpy(dest, argv[4]);
+		}
+		else
+		{
+			printf("Error: No destination file specified\n");
+			exit(1);
+		}
+
+		// Open the file
+		if ((out_file = fopen(dest, "w")) == NULL)
+		{
+			printf("Error: Cannot open file %s\n", dest);
+			exit(1);
+		}
+
+		// Write the board to the file
+		for (j = 0; j < size; j++)
+		{
+			for (i = 0; i < size; i++)
+			{
+				fprintf(out_file, "%c", board[i * size + j] ? 'x' : ' ');
+			}
+			fprintf(out_file, "\n");
+		}
+
+		fclose(out_file);
+	}
 
 #endif
 

@@ -219,6 +219,39 @@ int main(int argc, char *argv[])
 
 #ifdef OUTPUT
 
+	// Save the board to a file
+	FILE *out_file;
+	char dest[32];
+
+	// Get the destination file from the arguments
+	if (argc > 4)
+	{
+		strcpy(dest, argv[4]);
+	}
+	else
+	{
+		strcpy(dest, "../DATA/life.out");
+	}
+
+	// Open the file
+	if ((out_file = fopen(dest, "w")) == NULL)
+	{
+		printf("Error: Cannot open file %s\n", dest);
+		exit(1);
+	}
+
+	// Write the board to the file
+	for (j = 0; j < size; j++)
+	{
+		for (i = 0; i < size; i++)
+		{
+			fprintf(out_file, "%c", prev[i][j] ? 'x' : ' ');
+		}
+		fprintf(out_file, "\n");
+	}
+
+	fclose(out_file);
+
 #endif
 
 	free_board(prev, size);

@@ -3,25 +3,33 @@ MPICC=mpicc
 
 ################################################################
 
-make: 0 1
+make: 0 1 2
 
 ################################################################
 # 0. BASE
 ################################################################
 
-0: BASE BASE_PRINT BASE_DEBUG
+0: BASE BASE_PRINT_RESULT BASE_PRINT BASE_OUTPUT BASE_DEBUG
 
-BASE: 0.BASE/src/life.c
-	mkdir -p 0.BASE/bin
-	$(GCC) -o 0.BASE/bin/life 0.BASE/src/life.c
+BASE: BASE/src/life.c
+	mkdir -p BASE/bin
+	$(GCC) -o BASE/bin/life BASE/src/life.c
 
-BASE_PRINT: 0.BASE/src/life.c
-	mkdir -p 0.BASE/bin
-	$(GCC) -o 0.BASE/bin/life_print 0.BASE/src/life.c -DPRINT
+BASE_PRINT_RESULT: BASE/src/life.c
+	mkdir -p BASE/bin
+	$(GCC) -o BASE/bin/life_print_result BASE/src/life.c -DPRINT_RESULT
 
-BASE_DEBUG: 0.BASE/src/life.c
-	mkdir -p 0.BASE/bin
-	$(GCC) -o 0.BASE/bin/life_debug 0.BASE/src/life.c -DDEBUG
+BASE_PRINT: BASE/src/life.c
+	mkdir -p BASE/bin
+	$(GCC) -o BASE/bin/life_print BASE/src/life.c -DPRINT -DPRINT_RESULT
+
+BASE_OUTPUT: BASE/src/life.c
+	mkdir -p BASE/bin
+	$(GCC) -o BASE/bin/life_output BASE/src/life.c -DOUTPUT
+
+BASE_DEBUG: BASE/src/life.c
+	mkdir -p BASE/bin
+	$(GCC) -o BASE/bin/life_debug BASE/src/life.c -DDEBUG
 
 ################################################################
 # 1. MPI
@@ -29,28 +37,52 @@ BASE_DEBUG: 0.BASE/src/life.c
 
 1: MPI MPI_PRINT_RESULT MPI_PRINT MPI_OUTPUT MPI_DEBUG
 
-MPI: 1.MPI/src/life.c
-	mkdir -p 1.MPI/bin
-	$(MPICC) -o 1.MPI/bin/life 1.MPI/src/life.c
+MPI: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_mpi PARALLEL/src/life.c
 
-MPI_PRINT_RESULT: 1.MPI/src/life.c
-	mkdir -p 1.MPI/bin
-	$(MPICC) -o 1.MPI/bin/life_print_result 1.MPI/src/life.c -DPRINT_RESULT
+MPI_PRINT_RESULT: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_result_mpi PARALLEL/src/life.c -DPRINT_RESULT
 
-MPI_PRINT: 1.MPI/src/life.c
-	mkdir -p 1.MPI/bin
-	$(MPICC) -o 1.MPI/bin/life_print 1.MPI/src/life.c -DPRINT -DPRINT_RESULT
+MPI_PRINT: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_mpi PARALLEL/src/life.c -DPRINT -DPRINT_RESULT
 
-MPI_OUTPUT: 1.MPI/src/life.c
-	mkdir -p 1.MPI/bin
-	$(MPICC) -o 1.MPI/bin/life_output 1.MPI/src/life.c -DOUTPUT
+MPI_OUTPUT: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_output_mpi PARALLEL/src/life.c -DOUTPUT
 
-MPI_DEBUG: 1.MPI/src/life.c
-	mkdir -p 1.MPI/bin
-	$(MPICC) -o 1.MPI/bin/life_debug 1.MPI/src/life.c -DDEBUG
+MPI_DEBUG: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_debug_mpi PARALLEL/src/life.c -DDEBUG
 
 ################################################################
+# 2. OpenMP
+################################################################
+
+2: OPENMP OPENMP_PRINT_RESULT OPENMP_PRINT OPENMP_OUTPUT OPENMP_DEBUG
+
+OPENMP: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_openmp PARALLEL/src/life.c -fopenmp
+
+OPENMP_PRINT_RESULT: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_result_openmp PARALLEL/src/life.c -DPRINT_RESULT -fopenmp
+
+OPENMP_PRINT: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_openmp PARALLEL/src/life.c -DPRINT -DPRINT_RESULT -fopenmp
+
+OPENMP_OUTPUT: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_output_openmp PARALLEL/src/life.c -DOUTPUT -fopenmp
+
+OPENMP_DEBUG: PARALLEL/src/life.c
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_debug_openmp PARALLEL/src/life.c -DDEBUG -fopenmp
 
 clean:
-	rm -f 0.BASE/bin/life 0.BASE/bin/life_print 0.BASE/bin/life_debug
-	rm -f 1.MPI/bin/life 1.MPI/bin/life_print 1.MPI/bin/life_debug
+	rm -f BASE/bin/*
+	rm -f PARALLEL/bin/*

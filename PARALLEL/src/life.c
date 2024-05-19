@@ -18,6 +18,10 @@
 #include <sys/times.h>
 #include <mpi.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #define TWO_ADJACENT_ROWS 2
 #define ONE_ADJACENT_ROWS 1
 
@@ -93,23 +97,32 @@ void play(cell_t *board, cell_t *newboard, int size_cols, int start, int end)
 {
 	int i, j, a;
 	/* for each cell, apply the rules of Life */
-	for (i = start; i < end; i++)
-		for (j = 0; j < size_cols; j++)
-		{
-			a = adjacent_to(board, size_cols, i, j);
-			/* If a == 2, the cell keeps the same */
-			if (a == 2)
-				newboard[i * size_cols + j] = board[i * size_cols + j];
-			/* If a == 3, then cell lives */
-			if (a == 3)
-				newboard[i * size_cols + j] = 1;
-			/* If a < 2, then cell dies */
-			if (a < 2)
-				newboard[i * size_cols + j] = 0;
-			/* If a > 3, then cell dies */
-			if (a > 3)
-				newboard[i * size_cols + j] = 0;
-		}
+
+#ifdef _OPENMP
+#pragma omp parallel
+	{
+#pragma omp for private(i, j, a)
+#endif
+		for (i = start; i < end; i++)
+			for (j = 0; j < size_cols; j++)
+			{
+				a = adjacent_to(board, size_cols, i, j);
+				/* If a == 2, the cell keeps the same */
+				if (a == 2)
+					newboard[i * size_cols + j] = board[i * size_cols + j];
+				/* If a == 3, then cell lives */
+				if (a == 3)
+					newboard[i * size_cols + j] = 1;
+				/* If a < 2, then cell dies */
+				if (a < 2)
+					newboard[i * size_cols + j] = 0;
+				/* If a > 3, then cell dies */
+				if (a > 3)
+					newboard[i * size_cols + j] = 0;
+			}
+#ifdef _OPENMP
+	}
+#endif
 }
 
 /**
@@ -158,25 +171,6 @@ void read_file(FILE *f, cell_t *board, int size)
 		// fscanf(f,"\n");
 	}
 	free(s);
-}
-
-/**
- * @brief read the numbers board from a file
- *
- */
-void read_numbers(FILE *f, cell_t *board, int size)
-{
-	// Read a file that contains only numbers as input
-	// 1 2 3 4 5 6 7 8 9
-	int i, j;
-
-	for (i = 0; i < size; i++)
-	{
-		for (j = 0; j < size; j++)
-		{
-			fscanf(f, "%hhd", &board[i * size + j]);
-		}
-	}
 }
 
 /**
@@ -338,11 +332,10 @@ int main(int argc, char *argv[])
 		printf("Process %d, Row %d: ", rank, i);
 		for (j = 0; j < local_cols; j++)
 		{
-			printf("%d", local_prev[i * local_cols + j]);
+			printf("%d ", local_prev[i * local_cols + j]);
 		}
 		printf("\n");
 	}
-
 #endif
 
 	// Calculate the start and end of the block for each process
@@ -359,61 +352,73 @@ int main(int argc, char *argv[])
 	else
 	{
 		start = 1;
-		end = local_rows - 2;
+		end = local_rows - 1;
 	}
 
-	for (i = 0; i < steps; i++)
-	{
+#ifdef DEBUG
 
-		play(local_prev, local_next, local_cols, start, end);
-
-#ifdef PRINT
-
-		// Gather the board data
-		MPI_Gatherv(local_next, local_rows * local_cols, MPI_CHAR, board, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
-
-		if (rank == 0)
-		{
-			printf("--- Iteration %d ---\n", i);
-			print(local_next, size);
-			printf("--------------------\n\n");
-		}
+	// Print the start and end of the block for each process
+	printf("Rank %d: start %d, end %d\n", rank, start, end);
 
 #endif
 
-		local_tmp = local_next;
-		local_next = local_prev;
-		local_prev = local_tmp;
+	for (i = 0; i < steps; i++)
+	{
+		// Apply the rules of the game of life
+		play(local_prev, local_next, local_cols, start, end);
 
-		// Sincrhonize the shared rows
+		// Send the adjacent rows to the adjacent processes
+
 		if (rank == 0)
 		{
-			// The first process sends the last row (end row) to the next process
-			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-			// The first process receives the last row of the next process (end row)
-			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+			// Send the end row -1 to the next process
+			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+
+			// Receive the end row from the next process
+			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
 		if (rank > 0 && rank < nprocs - 1)
 		{
-			// The middle processes send the first row (start row) to the previous process
-			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-			// The middle processes receive the first row of the previous process (start row)
-			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			// Send the start row to the previous process
+			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
 
-			// The middle processes send the last row (end row) to the next process
-			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-			// The middle processes receive the last row of the next process (end row)
-			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			// Receive the start row -1 from the previous process
+			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+			// Send the end row -1 to the next process
+			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+
+			// Receive the end row from the next process
+			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
 		if (rank == nprocs - 1)
 		{
-			// The last process sends the first row (start row) to the previous process
-			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-			// The last process receives the first row of the previous process (start row)
-			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			// Send the start row to the previous process
+			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+
+			// Receive the start row -1 from the previous process
+			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
+
+		// Swap the pointers
+		local_tmp = local_next;
+		local_next = local_prev;
+		local_prev = local_tmp;
+
+#ifdef PRINT
+		// Gather the board data
+		MPI_Gatherv(local_prev, local_rows * local_cols, MPI_CHAR, board, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		if (rank == 0)
+		{
+			printf("--- Iteration %d ---\n", i);
+			print(board, size);
+			printf("--------------------\n\n");
+		}
+#endif
 	}
 
 #if defined(PRINT_RESULT) || defined(OUTPUT)
@@ -423,7 +428,7 @@ int main(int argc, char *argv[])
 
 #endif
 
-#ifdef PRINT_RESULT
+#if defined(PRINT) || defined(PRINT_RESULT)
 	if (rank == 0)
 	{
 		// Print the board
@@ -436,45 +441,6 @@ int main(int argc, char *argv[])
 
 #ifdef OUTPUT
 
-	// Save the board to a file
-	if (rank == 0)
-	{
-		FILE *f;
-		// The file is <source>-mpi-<size>-<steps>.out
-		char filename[32];
-
-		// The source file is the first argument change "in" to "out" from the path and remove the extension
-		strcpy(filename, source);
-		char *dot = strrchr(filename, '.');
-		if (dot != NULL)
-		{
-			*dot = '\0';
-		}
-		char *in = strstr(filename, "in");
-		strcpy(in, "out");
-
-		// Add the size and steps to the filename
-		sprintf(filename, "%s-mpi-%d-%d.out", filename, size, steps);
-
-		// Open the file for writing or create it if it does not exist
-		if ((f = fopen(filename, "w")) == NULL)
-		{
-			printf("Error: Cannot open file %s\n", filename);
-			exit(1);
-		}
-
-		// Print the board to the file
-		for (j = 0; j < size; j++)
-		{
-			for (i = 0; i < size; i++)
-			{
-				fprintf(f, "%c", board[i * size + j] ? 'x' : ' ');
-			}
-			fprintf(f, "\n");
-		}
-
-		fclose(f);
-	}
 #endif
 
 	// Free memory

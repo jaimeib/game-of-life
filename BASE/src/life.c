@@ -185,27 +185,42 @@ int main(int argc, char *argv[])
 	cell_t **next = allocate_board(size);
 	cell_t **tmp;
 
-#ifdef DEBUG
-	printf("Initial \n");
+#ifdef PRINT_RESULT
+
+	// Print the board
+	printf("--- Initial board ---\n");
 	print(prev, size);
-	printf("----------\n");
+	printf("---------------------\n\n");
+
 #endif
 
 	for (i = 0; i < steps; i++)
 	{
 		play(prev, next, size);
-#ifdef DEBUG
-		printf("%d ----------\n", i);
-		print(next, size);
-#endif
+
 		tmp = next;
 		next = prev;
 		prev = tmp;
+
+#ifdef PRINT
+		// Print the board
+		printf("--- Iteration %d ---\n", i);
+		print(prev, size);
+		printf("--------------------\n\n");
+#endif
 	}
 
-#ifdef DEBUG
+#ifdef PRINT_RESULT
+	// Print the board
+	printf("--- Final board ---\n");
 	print(prev, size);
+	printf("-------------------\n\n");
 #endif
+
+#ifdef OUTPUT
+
+#endif
+
 	free_board(prev, size);
 	free_board(next, size);
 }

@@ -384,6 +384,8 @@ int main(int argc, char *argv[])
 		play(local_prev, local_next, local_cols, start, end);
 
 		// Send the adjacent rows to the adjacent processes
+		MPI_Status status;
+		int count;
 
 		if (rank == 0)
 		{
@@ -392,7 +394,11 @@ int main(int argc, char *argv[])
 			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
 
 			// Receive the last row from the next process
-			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, &status);
+
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank + 1);
 		}
 
 		if (rank > 0 && rank < nprocs - 1)
@@ -401,13 +407,21 @@ int main(int argc, char *argv[])
 			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
 
 			// Receive the first row from the previous process
-			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, &status);
+
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank - 1);
 
 			// Send the end row to the next process
 			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
 
 			// Receive the last row from the next process
-			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, &status);
+
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank + 1);
 		}
 
 		if (rank == nprocs - 1)
@@ -416,7 +430,11 @@ int main(int argc, char *argv[])
 			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
 
 			// Receive the first row from the previous process
-			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, &status);
+
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank - 1);
 		}
 
 		// Swap the pointers

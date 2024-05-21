@@ -1,0 +1,36 @@
+Rank 1: local_rows 7, local_cols 20
+Sendcounts: 120 140 140 120
+Displacements: 0 80 180 280
+Rank 0: local_rows 6, local_cols 20
+Rank 3: local_rows 6, local_cols 20
+Process 0, Row 0: 0 0 0 0 1 0 1 1 0 0 0 0 1 0 0 0 1 0 1 0
+Process 0, Row 1: 0 0 0 0 1 0 1 0 0 0 0 0 0 0 1 1 0 0 0 1
+Process 0, Row 2: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+Process 0, Row 3: 0 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1
+Process 0, Row 4: 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0
+Process 3, Row 0: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 0
+Process 3, Row 1: 0 0 0 0 0 0 0 1 1 0 0 0 0 1 1 1 0 0 0 0
+Process 1, Row 0: 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0
+Process 1, Row 1: 0 1 1 0 1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0
+Process 1, Row 2: 0 0 0 0 0 0 0 0 1 0 0 0 1 1 0 0 1 0 1 0
+Process 0, Row 5: 0 1 1 0 1 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0
+Rank 0: start 0, end 5
+Process 1, Row 3: 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0 0 0 0 0 0
+Process 1, Row 4: 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+Process 1, Row 5: 0 0 1 1 0 0 0 0 1 0 1 0 0 1 0 0 0 0 0 1
+Process 1, Row 6: 0 0 0 0 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0 0
+Rank 1: start 1, end 6
+Process 3, Row 2: 0 1 0 0 0 0 1 0 0 0 0 0 1 1 0 0 0 0 1 1
+Process 3, Row 3: 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 1 0 1
+Process 3, Row 4: 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1
+Process 3, Row 5: 0 0 0 0 1 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0
+Rank 3: start 1, end 6
+Rank 2: local_rows 7, local_cols 20
+Process 2, Row 0: 0 0 1 1 0 0 0 0 1 0 1 0 0 1 0 0 0 0 0 1
+Process 2, Row 1: 0 0 0 0 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0 0
+Process 2, Row 2: 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0
+Process 2, Row 3: 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 1 0
+Process 2, Row 4: 0 0 0 1 1 0 1 0 0 0 0 0 0 1 0 0 0 0 1 0
+Process 2, Row 5: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 0
+Process 2, Row 6: 0 0 0 0 0 0 0 1 1 0 0 0 0 1 1 1 0 0 0 0
+Rank 2: start 1, end 6

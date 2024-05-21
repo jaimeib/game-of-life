@@ -3,7 +3,7 @@ MPICC=mpicc
 
 ################################################################
 
-make: 0 1 2
+make: 0 1 2 GENERATOR
 
 ################################################################
 # 0. BASE
@@ -87,6 +87,13 @@ OPENMP_DEBUG: PARALLEL/src/life.c
 # COMPARE RESULTS:
 # diff -qs DATA/out/life.out DATA/out/life-mpi.out
 ################################################################
+
+################################################################
+# GENERATOR:
+################################################################
+GENERATOR: GENERATOR/generator.c
+	mkdir -p GENERATOR/bin
+	$(GCC) -o GENERATOR/bin/generator GENERATOR/generator.c
 
 clean:
 	rm -f BASE/bin/*

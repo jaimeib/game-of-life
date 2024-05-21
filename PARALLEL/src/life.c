@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 		// Middle processes have the block plus 2 rows
 		for (i = 1; i < nprocs - 1; i++)
 		{
-			// The send count is the number of elements of the process block + additional row (respect to the process 0)
+			// The send count is the number of elements of the process block + additional row that is shared with the previous process
 			sendcounts[i] = (local_rows + ONE_ADJACENT_ROWS) * local_cols;
 			// The displacement is the previous displacement plus the number of elements of the previous process block - 2 rows
 			displs[i] = displs[i - 1] + sendcounts[i - 1] - TWO_ADJACENT_ROWS * local_cols;
@@ -301,8 +301,6 @@ int main(int argc, char *argv[])
 		// The last process has the remaining block plus 1 row
 		int last_block_rows = size - (local_rows - 1) * (nprocs - 1) + ONE_ADJACENT_ROWS;
 		sendcounts[nprocs - 1] = last_block_rows * local_cols;
-
-		// The displacement is the previous displacement plus the number of elements of the previous process block - 2 rows
 		displs[nprocs - 1] = displs[nprocs - 2] + sendcounts[nprocs - 2] - TWO_ADJACENT_ROWS * local_cols;
 	}
 
@@ -386,47 +384,57 @@ int main(int argc, char *argv[])
 		play(local_prev, local_next, local_cols, start, end);
 
 		// Send the adjacent rows to the adjacent processes
+		MPI_Status status;
+		int count;
 
 		if (rank == 0)
 		{
 
-			// Send the end row -1 to the next process
+			// Send the end row to the next process
 			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-			printf("Rank %d: Sent row %d to process %d\n", rank, local_rows - 2, rank + 1);
 
-			// Receive the end row from the next process
-			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			printf("Rank %d: Received row %d from process %d\n", rank, local_rows - 1, rank + 1);
+			// Receive the last row from the next process
+			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, &status);
+
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank + 1);
 		}
 
 		if (rank > 0 && rank < nprocs - 1)
 		{
 			// Send the start row to the previous process
 			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-			printf("Rank %d: Sent row %d to process %d\n", rank, 1, rank - 1);
 
-			// Receive the start -1 row from the previous process
-			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			printf("Rank %d: Received row %d from process %d\n", rank, 0, rank - 1);
+			// Receive the first row from the previous process
+			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, &status);
 
-			// Send the end row -1 to the next process
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank - 1);
+
+			// Send the end row to the next process
 			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-			printf("Rank %d: Sent row %d to process %d\n", rank, local_rows - 2, rank + 1);
 
-			// Receive the end row from the next process
-			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			printf("Rank %d: Received row %d from process %d\n", rank, local_rows - 1, rank + 1);
+			// Receive the last row from the next process
+			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, &status);
+
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank + 1);
 		}
 
 		if (rank == nprocs - 1)
 		{
 			// Send the start row to the previous process
 			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-			printf("Rank %d: Sent row %d to process %d\n", rank, 1, rank - 1);
 
-			// Receive the start -1 row from the previous process
-			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			printf("Rank %d: Received row %d from process %d\n", rank, 0, rank - 1);
+			// Receive the first row from the previous process
+			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, &status);
+
+			// Get the count of data received
+			MPI_Get_count(&status, MPI_CHAR, &count);
+			printf("Rank %d received %d elements from rank %d\n", rank, count, rank - 1);
 		}
 
 		// Swap the pointers
@@ -435,22 +443,13 @@ int main(int argc, char *argv[])
 		local_prev = local_tmp;
 
 #ifdef PRINT
-
 		// Gather the board data
 		MPI_Gatherv(local_prev, local_rows * local_cols, MPI_CHAR, board, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 		if (rank == 0)
 		{
 			printf("--- Iteration %d ---\n", i);
-			for (int a = 0; a < size; a++)
-			{
-				printf("Row %d: ", a);
-				for (int b = 0; b < size; b++)
-				{
-					printf("%d ", board[a * size + b]);
-				}
-				printf("\n");
-			}
+			print(board, size);
 			printf("--------------------\n\n");
 		}
 #endif

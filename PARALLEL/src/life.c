@@ -388,10 +388,10 @@ int main(int argc, char *argv[])
 		if (rank == 0)
 		{
 
-			// Send the end row -1 to the next process
+			// Send the end row to the next process
 			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
 
-			// Receive the end row from the next process
+			// Receive the last row from the next process
 			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
@@ -400,13 +400,13 @@ int main(int argc, char *argv[])
 			// Send the start row to the previous process
 			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
 
-			// Receive the start row -1 from the previous process
+			// Receive the first row from the previous process
 			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-			// Send the end row -1 to the next process
+			// Send the end row to the next process
 			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
 
-			// Receive the end row from the next process
+			// Receive the last row from the next process
 			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
@@ -415,7 +415,7 @@ int main(int argc, char *argv[])
 			// Send the start row to the previous process
 			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
 
-			// Receive the start row -1 from the previous process
+			// Receive the first row from the previous process
 			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 

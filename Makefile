@@ -95,6 +95,19 @@ GENERATOR: GENERATOR/generator.c
 	mkdir -p GENERATOR/bin
 	$(GCC) -o GENERATOR/bin/generator GENERATOR/generator.c
 
+################################################################
+# TEST:
+################################################################
+TEST: TEST/test.c
+	mkdir -p TEST/bin
+	$(GCC) -o TEST/bin/test TEST/test.c
+
+################################################################
+# CLEAN:
+################################################################
 clean:
 	rm -f BASE/bin/*
 	rm -f PARALLEL/bin/*
+	rm -f GENERATOR/bin/*
+	rm -f TEST/bin/*
+	rm -f DATA/out/*

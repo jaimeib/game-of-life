@@ -62,17 +62,18 @@ void free_board(cell_t *board)
  * @brief Return the number of on cells adjacent to the i,j cell
  *
  * @param board board to check
+ * @param size_rows size of the board rows
  * @param size_cols size of the board columns
  * @param i row of the cell
  * @param j column of the cell
  * @return int number of on cells adjacent to the i,j cell
  */
-int adjacent_to(cell_t *board, int size_cols, int i, int j)
+int adjacent_to(cell_t *board, int size_rows, int size_cols, int i, int j)
 {
 	int k, l, count = 0;
 
 	int sk = (i > 0) ? i - 1 : i;
-	int ek = (i + 1 < size_cols) ? i + 1 : i;
+	int ek = (i + 1 < size_rows) ? i + 1 : i;
 	int sl = (j > 0) ? j - 1 : j;
 	int el = (j + 1 < size_cols) ? j + 1 : j;
 
@@ -93,36 +94,28 @@ int adjacent_to(cell_t *board, int size_cols, int i, int j)
  * @param start start row
  * @param end end row
  */
-void play(cell_t *board, cell_t *newboard, int size_cols, int start, int end)
+void play(cell_t *board, cell_t *newboard, int size_rows, int size_cols, int start, int end)
 {
 	int i, j, a;
 	/* for each cell, apply the rules of Life */
 
-#ifdef _OPENMP
-#pragma omp parallel
-	{
-#pragma omp for private(i, j, a)
-#endif
-		for (i = start; i < end; i++)
-			for (j = 0; j < size_cols; j++)
-			{
-				a = adjacent_to(board, size_cols, i, j);
-				/* If a == 2, the cell keeps the same */
-				if (a == 2)
-					newboard[i * size_cols + j] = board[i * size_cols + j];
-				/* If a == 3, then cell lives */
-				if (a == 3)
-					newboard[i * size_cols + j] = 1;
-				/* If a < 2, then cell dies */
-				if (a < 2)
-					newboard[i * size_cols + j] = 0;
-				/* If a > 3, then cell dies */
-				if (a > 3)
-					newboard[i * size_cols + j] = 0;
-			}
-#ifdef _OPENMP
-	}
-#endif
+	for (i = start; i < end; i++)
+		for (j = 0; j < size_cols; j++)
+		{
+			a = adjacent_to(board, size_rows, size_cols, i, j);
+			/* If a == 2, the cell keeps the same */
+			if (a == 2)
+				newboard[i * size_cols + j] = board[i * size_cols + j];
+			/* If a == 3, then cell lives */
+			if (a == 3)
+				newboard[i * size_cols + j] = 1;
+			/* If a < 2, then cell dies */
+			if (a < 2)
+				newboard[i * size_cols + j] = 0;
+			/* If a > 3, then cell dies */
+			if (a > 3)
+				newboard[i * size_cols + j] = 0;
+		}
 }
 
 /**
@@ -190,12 +183,13 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-	int size = 11, steps = 7;
+	int size, steps;
 	FILE *f;
 	char source[32];
 	int i, j;
 	cell_t *board, *local_prev, *local_next, *local_tmp;
 
+	// Variables to store the send counts and displacements for each process (scatterv and gatherv)
 	int *sendcounts, *displs;
 
 	// Variables to store the size of the block for each process
@@ -244,9 +238,6 @@ int main(int argc, char *argv[])
 	// Read the input file (only rank 0)
 	if (rank == 0)
 	{
-		// f = stdin;
-		// scanf(f,"%d %d", &size, &steps);
-
 		// Get the source file from the arguments
 		if (argc >= 4)
 		{
@@ -381,66 +372,47 @@ int main(int argc, char *argv[])
 	for (i = 0; i < steps; i++)
 	{
 		// Apply the rules of the game of life
-		play(local_prev, local_next, local_cols, start, end);
-
-		// Send the adjacent rows to the adjacent processes
-		MPI_Status status;
-		int count;
-
-		if (rank == 0)
-		{
-
-			// Send the end row to the next process
-			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-
-			// Receive the last row from the next process
-			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, &status);
-
-			// Get the count of data received
-			MPI_Get_count(&status, MPI_CHAR, &count);
-			printf("Rank %d received %d elements from rank %d\n", rank, count, rank + 1);
-		}
-
-		if (rank > 0 && rank < nprocs - 1)
-		{
-			// Send the start row to the previous process
-			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-
-			// Receive the first row from the previous process
-			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, &status);
-
-			// Get the count of data received
-			MPI_Get_count(&status, MPI_CHAR, &count);
-			printf("Rank %d received %d elements from rank %d\n", rank, count, rank - 1);
-
-			// Send the end row to the next process
-			MPI_Send(local_next + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
-
-			// Receive the last row from the next process
-			MPI_Recv(local_next + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, &status);
-
-			// Get the count of data received
-			MPI_Get_count(&status, MPI_CHAR, &count);
-			printf("Rank %d received %d elements from rank %d\n", rank, count, rank + 1);
-		}
-
-		if (rank == nprocs - 1)
-		{
-			// Send the start row to the previous process
-			MPI_Send(local_next + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-
-			// Receive the first row from the previous process
-			MPI_Recv(local_next, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, &status);
-
-			// Get the count of data received
-			MPI_Get_count(&status, MPI_CHAR, &count);
-			printf("Rank %d received %d elements from rank %d\n", rank, count, rank - 1);
-		}
+		play(local_prev, local_next, local_rows, local_cols, start, end);
 
 		// Swap the pointers
 		local_tmp = local_next;
 		local_next = local_prev;
 		local_prev = local_tmp;
+
+		// Exchange the adjacent rows between processes
+		if (rank == 0)
+		{
+
+			// Send the end row to the next process
+			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+
+			// Receive the last row from the next process
+			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+
+		if (rank > 0 && rank < nprocs - 1)
+		{
+			// Send the start row to the previous process
+			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+
+			// Receive the first row from the previous process
+			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+			// Send the end row to the next process
+			MPI_Send(local_prev + (local_rows - 2) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD);
+
+			// Receive the last row from the next process
+			MPI_Recv(local_prev + (local_rows - 1) * local_cols, local_cols, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+
+		if (rank == nprocs - 1)
+		{
+			// Send the start row to the previous process
+			MPI_Send(local_prev + local_cols, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
+
+			// Receive the first row from the previous process
+			MPI_Recv(local_prev, local_cols, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
 
 #ifdef PRINT
 		// Gather the board data
@@ -463,6 +435,7 @@ int main(int argc, char *argv[])
 #endif
 
 #if defined(PRINT) || defined(PRINT_RESULT)
+
 	if (rank == 0)
 	{
 		// Print the board
@@ -518,6 +491,8 @@ int main(int argc, char *argv[])
 	if (rank == 0)
 	{
 		free_board(board);
+		free(sendcounts);
+		free(displs);
 	}
 	free_board(local_prev);
 	free_board(local_next);

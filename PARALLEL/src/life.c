@@ -99,6 +99,9 @@ void play(cell_t *board, cell_t *newboard, int size_rows, int size_cols, int sta
 	int i, j, a;
 	/* for each cell, apply the rules of Life */
 
+#ifdef _OPENMP
+#pragma omp parallel for private(i, j, a) schedule(static)
+#endif
 	for (i = start; i < end; i++)
 		for (j = 0; j < size_cols; j++)
 		{
@@ -427,7 +430,7 @@ int main(int argc, char *argv[])
 #endif
 	}
 
-#if defined(PRINT_RESULT) || defined(OUTPUT)
+#if defined(PRINT_RESULT) || defined(OUTPUT) && !defined(PRINT)
 
 	// Gather the board data
 	MPI_Gatherv(local_prev, local_rows * local_cols, MPI_CHAR, board, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);

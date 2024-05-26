@@ -22,6 +22,10 @@
 #include <omp.h>
 #endif
 
+#ifdef LOAD_BALANCING
+#include "life.h"
+#endif
+
 #define TWO_ADJACENT_ROWS 2
 #define ONE_ADJACENT_ROWS 1
 
@@ -218,6 +222,17 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+#ifdef LOAD_BALANCING
+
+	// Get the number of rows for each process
+	int *rows_distribution = load_balancing(nprocs, size, rank, MPI_COMM_WORLD);
+
+	// Compute the size of the block for each process
+	local_rows = rows_distribution[rank];
+	local_cols = size;
+
+#else
+
 	// Compute the size of the block for each process
 	local_rows = size / nprocs;
 	local_cols = size;
@@ -227,6 +242,8 @@ int main(int argc, char *argv[])
 	{
 		local_rows = size - local_rows * (nprocs - 1);
 	}
+
+#endif
 
 	// Add the adjacent rows depending on the rank
 	if (rank == 0 || rank == nprocs - 1)
@@ -279,6 +296,27 @@ int main(int argc, char *argv[])
 		sendcounts = (int *)malloc(nprocs * sizeof(int));
 		displs = (int *)malloc(nprocs * sizeof(int));
 
+#ifdef LOAD_BALANCING
+
+		// Process 0 has the first block
+		sendcounts[0] = local_rows * local_cols;
+		displs[0] = 0;
+
+		// Middle processes have the block plus 2 rows
+		for (i = 1; i < nprocs - 1; i++)
+		{
+			// The send count is the number of elements of the process block plus 2 rows
+			sendcounts[i] = rows_distribution[i] * local_cols + TWO_ADJACENT_ROWS * local_cols;
+			// The displacement is the previous displacement plus the number of elements of the previous process block - 2 rows
+			displs[i] = displs[i - 1] + sendcounts[i - 1] - TWO_ADJACENT_ROWS * local_cols;
+		}
+
+		// The last process has the remaining block plus 1 row
+		sendcounts[nprocs - 1] = rows_distribution[nprocs - 1] * local_cols + local_cols;
+		displs[nprocs - 1] = displs[nprocs - 2] + sendcounts[nprocs - 2] - TWO_ADJACENT_ROWS * local_cols;
+
+#else
+
 		// Process 0 has the first block
 		sendcounts[0] = local_rows * local_cols;
 		displs[0] = 0;
@@ -296,6 +334,8 @@ int main(int argc, char *argv[])
 		int last_block_rows = size - (local_rows - 1) * (nprocs - 1) + ONE_ADJACENT_ROWS;
 		sendcounts[nprocs - 1] = last_block_rows * local_cols;
 		displs[nprocs - 1] = displs[nprocs - 2] + sendcounts[nprocs - 2] - TWO_ADJACENT_ROWS * local_cols;
+
+#endif
 	}
 
 #ifdef DEBUG

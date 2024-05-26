@@ -3,7 +3,7 @@ MPICC=mpicc
 
 ################################################################
 
-make: 0 1 2 GENERATOR
+make: 0 1 2 3 GENERATOR TEST
 
 ################################################################
 # 0. BASE
@@ -84,6 +84,32 @@ OPENMP_DEBUG: PARALLEL/src/life.c
 	$(MPICC) -o PARALLEL/bin/life_debug_openmp PARALLEL/src/life.c -DDEBUG -fopenmp
 
 ################################################################
+# 3. LOAD BALANCING
+################################################################
+
+3: LOAD_BALANCING LOAD_BALANCING_PRINT_RESULT LOAD_BALANCING_PRINT LOAD_BALANCING_OUTPUT LOAD_BALANCING_DEBUG
+
+LOAD_BALANCING: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_load_balancing PARALLEL/src/life.c -DLOAD_BALANCING
+
+LOAD_BALANCING_PRINT_RESULT: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_result_load_balancing PARALLEL/src/life.c -DPRINT_RESULT -DLOAD_BALANCING
+
+LOAD_BALANCING_PRINT: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_load_balancing PARALLEL/src/life.c -DPRINT -DPRINT_RESULT -DLOAD_BALANCING
+
+LOAD_BALANCING_OUTPUT: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_output_load_balancing PARALLEL/src/life.c -DOUTPUT -DLOAD_BALANCING
+
+LOAD_BALANCING_DEBUG: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_debug_load_balancing PARALLEL/src/life.c -DDEBUG -DLOAD_BALANCING
+
+################################################################
 # COMPARE RESULTS:
 # diff -qs DATA/out/life.out DATA/out/life-mpi.out
 ################################################################
@@ -98,9 +124,9 @@ GENERATOR: GENERATOR/generator.c
 ################################################################
 # TEST:
 ################################################################
-TEST: TEST/test.c
+TEST: TEST/src/test.c TEST/src/test.h
 	mkdir -p TEST/bin
-	$(GCC) -o TEST/bin/test TEST/test.c
+	$(MPICC) -o TEST/bin/test TEST/src/test.c
 
 ################################################################
 # CLEAN:

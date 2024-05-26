@@ -4,7 +4,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/times.h>
+
 #include <mpi.h>
+
+#include "test.h"
 
 int main(int argc, char *argv[])
 {
@@ -28,15 +31,14 @@ int main(int argc, char *argv[])
 
     MPI_Status status;
 
-    // Number of rows and columns per process
-    local_rows = N / nprocs;
-    local_cols = N;
+    // Get the number of rows for each process
+    int *rows_distribution = load_balancing(nprocs, N, rank, MPI_COMM_WORLD);
 
-    // Compute the size of the block of the last process
-    if (rank == nprocs - 1)
-    {
-        local_rows = N - local_rows * (nprocs - 1);
-    }
+    printf("Rank %d: rows %d\n", rank, rows_distribution[rank]);
+
+    // Number of rows and columns per process
+    local_rows = rows_distribution[rank];
+    local_cols = N;
 
     // Add the adjacent rows depending on the rank
     if (rank == 0 || rank == nprocs - 1)
@@ -86,15 +88,14 @@ int main(int argc, char *argv[])
         // Middle processes have the block plus 2 rows
         for (int i = 1; i < nprocs - 1; i++)
         {
-            // The send count is the number of elements of the process block + additional row that is shared with the previous process
-            sendcounts[i] = (local_rows + 1) * local_cols;
+            // The send count is the number of elements of the process block plus 2 rows
+            sendcounts[i] = rows_distribution[i] * local_cols + 2 * local_cols;
             // The displacement is the previous displacement plus the number of elements of the previous process block - 2 rows
             displs[i] = displs[i - 1] + sendcounts[i - 1] - 2 * local_cols;
         }
 
         // The last process has the remaining block plus 1 row
-        int last_block_rows = N - (local_rows - 1) * (nprocs - 1) + 1;
-        sendcounts[nprocs - 1] = last_block_rows * local_cols;
+        sendcounts[nprocs - 1] = rows_distribution[nprocs - 1] * local_cols + local_cols;
         displs[nprocs - 1] = displs[nprocs - 2] + sendcounts[nprocs - 2] - 2 * local_cols;
 
         printf("Sendcounts: ");

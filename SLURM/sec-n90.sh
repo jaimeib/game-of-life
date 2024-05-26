@@ -8,4 +8,4 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --nodelist=n16-90
 
-srun ../BASH/bin/life  DATA/in/1000.in 1000 5 
+srun BASE/bin/life  DATA/in/5000.in 5000 10

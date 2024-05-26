@@ -3,7 +3,7 @@ MPICC=mpicc
 
 ################################################################
 
-make: 0 1 2 3 GENERATOR TEST
+make: 0 1 2 3 4 GENERATOR TEST
 
 ################################################################
 # 0. BASE
@@ -84,30 +84,56 @@ OPENMP_DEBUG: PARALLEL/src/life.c
 	$(MPICC) -o PARALLEL/bin/life_debug_openmp PARALLEL/src/life.c -DDEBUG -fopenmp
 
 ################################################################
-# 3. LOAD BALANCING
+# 3. LOAD BALANCING MPI
 ################################################################
 
-3: LOAD_BALANCING LOAD_BALANCING_PRINT_RESULT LOAD_BALANCING_PRINT LOAD_BALANCING_OUTPUT LOAD_BALANCING_DEBUG
+3: LOAD_BALANCING_MPI LOAD_BALANCING_PRINT_RESULT_MPI LOAD_BALANCING_PRINT_MPI LOAD_BALANCING_OUTPUT_MPI LOAD_BALANCING_DEBUG_MPI
 
-LOAD_BALANCING: PARALLEL/src/life.c PARALLEL/src/life.h
+LOAD_BALANCING_MPI: PARALLEL/src/life.c PARALLEL/src/life.h
 	mkdir -p PARALLEL/bin
-	$(MPICC) -o PARALLEL/bin/life_load_balancing PARALLEL/src/life.c -DLOAD_BALANCING
+	$(MPICC) -o PARALLEL/bin/life_load_balancing_mpi PARALLEL/src/life.c -DLOAD_BALANCING
 
-LOAD_BALANCING_PRINT_RESULT: PARALLEL/src/life.c PARALLEL/src/life.h
+LOAD_BALANCING_PRINT_RESULT_MPI: PARALLEL/src/life.c PARALLEL/src/life.h
 	mkdir -p PARALLEL/bin
-	$(MPICC) -o PARALLEL/bin/life_print_result_load_balancing PARALLEL/src/life.c -DPRINT_RESULT -DLOAD_BALANCING
+	$(MPICC) -o PARALLEL/bin/life_print_result_load_balancing_mpi PARALLEL/src/life.c -DPRINT_RESULT -DLOAD_BALANCING
 
-LOAD_BALANCING_PRINT: PARALLEL/src/life.c PARALLEL/src/life.h
+LOAD_BALANCING_PRINT_MPI: PARALLEL/src/life.c PARALLEL/src/life.h
 	mkdir -p PARALLEL/bin
-	$(MPICC) -o PARALLEL/bin/life_print_load_balancing PARALLEL/src/life.c -DPRINT -DPRINT_RESULT -DLOAD_BALANCING
+	$(MPICC) -o PARALLEL/bin/life_print_load_balancing_mpi PARALLEL/src/life.c -DPRINT -DPRINT_RESULT -DLOAD_BALANCING
 
-LOAD_BALANCING_OUTPUT: PARALLEL/src/life.c PARALLEL/src/life.h
+LOAD_BALANCING_OUTPUT_MPI: PARALLEL/src/life.c PARALLEL/src/life.h
 	mkdir -p PARALLEL/bin
-	$(MPICC) -o PARALLEL/bin/life_output_load_balancing PARALLEL/src/life.c -DOUTPUT -DLOAD_BALANCING
+	$(MPICC) -o PARALLEL/bin/life_output_load_balancing_mpi PARALLEL/src/life.c -DOUTPUT -DLOAD_BALANCING
 
-LOAD_BALANCING_DEBUG: PARALLEL/src/life.c PARALLEL/src/life.h
+LOAD_BALANCING_DEBUG_MPI: PARALLEL/src/life.c PARALLEL/src/life.h
 	mkdir -p PARALLEL/bin
-	$(MPICC) -o PARALLEL/bin/life_debug_load_balancing PARALLEL/src/life.c -DDEBUG -DLOAD_BALANCING
+	$(MPICC) -o PARALLEL/bin/life_debug_load_balancing_mpi PARALLEL/src/life.c -DDEBUG -DLOAD_BALANCING
+
+################################################################
+# 4. LOAD BALANCING OPENMP
+################################################################
+
+4: LOAD_BALANCING_OPENMP LOAD_BALANCING_PRINT_RESULT_OPENMP LOAD_BALANCING_PRINT_OPENMP LOAD_BALANCING_OUTPUT_OPENMP LOAD_BALANCING_DEBUG_OPENMP
+
+LOAD_BALANCING_OPENMP: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_load_balancing_openmp PARALLEL/src/life.c -DLOAD_BALANCING -fopenmp
+
+LOAD_BALANCING_PRINT_RESULT_OPENMP: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_result_load_balancing_openmp PARALLEL/src/life.c -DPRINT_RESULT -DLOAD_BALANCING -fopenmp
+
+LOAD_BALANCING_PRINT_OPENMP: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_print_load_balancing_openmp PARALLEL/src/life.c -DPRINT -DPRINT_RESULT -DLOAD_BALANCING -fopenmp
+
+LOAD_BALANCING_OUTPUT_OPENMP: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_output_load_balancing_openmp PARALLEL/src/life.c -DOUTPUT -DLOAD_BALANCING -fopenmp
+
+LOAD_BALANCING_DEBUG_OPENMP: PARALLEL/src/life.c PARALLEL/src/life.h
+	mkdir -p PARALLEL/bin
+	$(MPICC) -o PARALLEL/bin/life_debug_load_balancing_openmp PARALLEL/src/life.c -DDEBUG -DLOAD_BALANCING -fopenmp
 
 ################################################################
 # COMPARE RESULTS:

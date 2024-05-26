@@ -19,7 +19,12 @@
 #include <mpi.h>
 
 #ifdef _OPENMP
+
 #include <omp.h>
+
+#define n1680maxCPUs 20
+#define n1680usableCPUs 6
+
 #endif
 
 #ifdef LOAD_BALANCING
@@ -104,6 +109,36 @@ void play(cell_t *board, cell_t *newboard, int size_rows, int size_cols, int sta
 	/* for each cell, apply the rules of Life */
 
 #ifdef _OPENMP
+
+	// Apply the rules of the game of life in parallel
+
+#ifdef LOAD_BALANCING
+
+	// Set the number of threads (custom)
+	system("nproc --all > nproc.txt");
+
+	// Read the number of threads from the file
+	FILE *nproc_file = fopen("nproc.txt", "r");
+
+	// Get the number of threads
+	int nproc;
+	fscanf(nproc_file, "%d", &nproc);
+
+	// Close the file
+	fclose(nproc_file);
+
+	// Set the number of threads
+	if (nproc == n1680maxCPUs)
+	{
+		omp_set_num_threads(n1680usableCPUs);
+	}
+	else
+	{
+		omp_set_num_threads(nproc);
+	}
+
+#endif
+
 #pragma omp parallel for private(i, j, a) schedule(static)
 #endif
 	for (i = start; i < end; i++)

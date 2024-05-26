@@ -13,23 +13,23 @@ make: 0 1 2 3 GENERATOR TEST
 
 BASE: BASE/src/life.c
 	mkdir -p BASE/bin
-	$(GCC) -o BASE/bin/life BASE/src/life.c
+	$(MPICC) -o BASE/bin/life BASE/src/life.c
 
 BASE_PRINT_RESULT: BASE/src/life.c
 	mkdir -p BASE/bin
-	$(GCC) -o BASE/bin/life_print_result BASE/src/life.c -DPRINT_RESULT
+	$(MPICC) -o BASE/bin/life_print_result BASE/src/life.c -DPRINT_RESULT
 
 BASE_PRINT: BASE/src/life.c
 	mkdir -p BASE/bin
-	$(GCC) -o BASE/bin/life_print BASE/src/life.c -DPRINT -DPRINT_RESULT
+	$(MPICC) -o BASE/bin/life_print BASE/src/life.c -DPRINT -DPRINT_RESULT
 
 BASE_OUTPUT: BASE/src/life.c
 	mkdir -p BASE/bin
-	$(GCC) -o BASE/bin/life_output BASE/src/life.c -DOUTPUT
+	$(MPICC) -o BASE/bin/life_output BASE/src/life.c -DOUTPUT
 
 BASE_DEBUG: BASE/src/life.c
 	mkdir -p BASE/bin
-	$(GCC) -o BASE/bin/life_debug BASE/src/life.c -DDEBUG
+	$(MPICC) -o BASE/bin/life_debug BASE/src/life.c -DDEBUG
 
 ################################################################
 # 1. MPI

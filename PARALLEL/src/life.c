@@ -182,6 +182,12 @@ void read_file(FILE *f, cell_t *board, int size)
  */
 int main(int argc, char *argv[])
 {
+	// Time variables
+	double t1_TOTAL, t2_TOTAL, t1_ROI, t2_ROI;
+
+	// Get initial time
+	t1_TOTAL = MPI_Wtime();
+
 	// MPI variables for rank and number of processes
 	int rank, nprocs;
 
@@ -412,6 +418,9 @@ int main(int argc, char *argv[])
 
 #endif
 
+	// Get the timestamp of the initial time of the ROI
+	t1_ROI = MPI_Wtime();
+
 	for (i = 0; i < steps; i++)
 	{
 		// Apply the rules of the game of life
@@ -469,6 +478,9 @@ int main(int argc, char *argv[])
 		}
 #endif
 	}
+
+	// Get the timestamp of the final time of the ROI
+	t2_ROI = MPI_Wtime();
 
 #if defined(PRINT_RESULT) || defined(OUTPUT) && !defined(PRINT)
 
@@ -542,6 +554,19 @@ int main(int argc, char *argv[])
 
 	// Finalize MPI environment
 	MPI_Finalize();
+
+	// Get final time
+	t2_TOTAL = MPI_Wtime();
+
+	// Print the execution time
+	if (rank == 0)
+	{
+		// Print the ROI time to stdout
+		fprintf(stdout, "%f\n", t2_ROI - t1_ROI);
+
+		// Print the total time to stderr
+		fprintf(stderr, "%f\n", t2_TOTAL - t1_TOTAL);
+	}
 
 	return 0;
 }

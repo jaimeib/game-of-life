@@ -14,6 +14,8 @@
 #include <time.h>
 #include <sys/times.h>
 
+#include <mpi.h>
+
 typedef unsigned char cell_t;
 
 // Descomentar esta línea para ver el tablero en pantalla. Sólo para el fichero life.in
@@ -161,6 +163,11 @@ void read_file(FILE *f, cell_t **board, int size)
 int main(int argc, char *argv[])
 {
 
+	// Get initial time
+	double t1_TOTAL, t2_TOTAL, t1_ROI, t2_ROI;
+
+	t1_TOTAL = MPI_Wtime();
+
 	int size = 11, steps = 7;
 	FILE *f;
 	char source[32] = "../DATA/life.in";
@@ -194,6 +201,9 @@ int main(int argc, char *argv[])
 
 #endif
 
+	// Get the timestamp of the initial time of the ROI
+	t1_ROI = MPI_Wtime();
+
 	for (i = 0; i < steps; i++)
 	{
 		play(prev, next, size);
@@ -209,6 +219,9 @@ int main(int argc, char *argv[])
 		printf("--------------------\n\n");
 #endif
 	}
+
+	// Get the timestamp of the final time of the ROI
+	t2_ROI = MPI_Wtime();
 
 #ifdef PRINT_RESULT
 	// Print the board
@@ -256,4 +269,13 @@ int main(int argc, char *argv[])
 
 	free_board(prev, size);
 	free_board(next, size);
+
+	// Get final time
+	t2_TOTAL = MPI_Wtime();
+
+	// Print to the standard output the time of the ROI
+	fprintf(stdout, "%f\n", t2_ROI - t1_ROI);
+
+	// Print to the error output the total time
+	fprintf(stderr, "%f\n", t2_TOTAL - t1_TOTAL);
 }

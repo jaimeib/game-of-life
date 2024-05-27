@@ -143,9 +143,9 @@ LOAD_BALANCING_DEBUG_OPENMP: PARALLEL/src/life.c PARALLEL/src/life.h
 ################################################################
 # GENERATOR:
 ################################################################
-GENERATOR: GENERATOR/generator.c
+GENERATOR: GENERATOR/src/generator.c
 	mkdir -p GENERATOR/bin
-	$(GCC) -o GENERATOR/bin/generator GENERATOR/generator.c
+	$(GCC) -o GENERATOR/bin/generator GENERATOR/src/generator.c
 
 ################################################################
 # TEST:

@@ -4,6 +4,7 @@
 #SBATCH --error=SLURM/results/openmp-w-lb-40task.err
 #SBATCH --time=00:10:00
 #SBATCH --tasks=7
+#SBATCH --nodelist=n16-[80-83],n16-[90-93]
 #SBATCH --exclusive
 #SBATCH --partition=lhpc
 

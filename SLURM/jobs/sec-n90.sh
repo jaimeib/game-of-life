@@ -7,6 +7,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --nodelist=n16-90
+#SBATCH --partition=lhpc
 
 srun BASE/bin/life  DATA/in/5000.in 5000 100
 

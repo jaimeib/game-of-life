@@ -6,4 +6,4 @@
 #SBATCH --tasks=4
 #SBATCH --nodelist=[n16-80,n16-81,n16-82,n16-83]
 
-srun PARALLEL/bin/life  DATA/in/5000.in 5000 100
+srun PARALLEL/bin/life DATA/in/5000.in 5000 100

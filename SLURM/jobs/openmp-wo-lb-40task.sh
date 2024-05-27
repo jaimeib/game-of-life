@@ -7,5 +7,5 @@
 #SBATCH --exclusive
 #SBATCH --partition=lhpc
 
-srun PARALLEL/bin/life_openmp DATA/in/5000.in 5000 100
+prun PARALLEL/bin/life_openmp DATA/in/5000.in 5000 100
 

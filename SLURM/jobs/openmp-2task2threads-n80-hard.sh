@@ -8,5 +8,5 @@
 #SBATCH --partition=lhpc
 
 export OMP_NUM_THREADS=2
-srun PARALLEL/bin/life_openmp DATA/in/5000.in 5000 100
+prun PARALLEL/bin/life_openmp DATA/in/5000.in 5000 100
 

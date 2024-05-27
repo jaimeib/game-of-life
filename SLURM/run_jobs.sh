@@ -3,6 +3,8 @@
 # Run the jobs
 echo "Running the jobs..."
 
+export PATH=$PATH:/opt/ohpc/pub/mpi/openmpi4-gnu9/4.1.1/bin
+
 # Get the list of all the job scripts in the jobs directory
 job_scripts=$(ls SLURM/jobs)
 

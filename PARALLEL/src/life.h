@@ -19,10 +19,10 @@ typedef struct
 /* Define cluster configuration */
 Cluster cluster = {
     .nodes = (ClusterNode[]){
-        {.hostname = "n16-80", .niceness = 2},
-        {.hostname = "n16-81", .niceness = 2},
-        {.hostname = "n16-82", .niceness = 2},
-        {.hostname = "n16-83", .niceness = 2},
+        {.hostname = "n16-80", .niceness = 3},
+        {.hostname = "n16-81", .niceness = 3},
+        {.hostname = "n16-82", .niceness = 3},
+        {.hostname = "n16-83", .niceness = 3},
         {.hostname = "n16-90", .niceness = 1},
         {.hostname = "n16-91", .niceness = 1},
         {.hostname = "n16-92", .niceness = 1},

@@ -2,7 +2,7 @@
 #SBATCH --job-name=mpi-wo-lb-40task
 #SBATCH --output=SLURM/results/mpi-wo-lb-40task.out
 #SBATCH --error=SLURM/results/mpi-wo-lb-40task.err
-#SBATCH --time=00:02:00
+#SBATCH --time=00:05:00
 #SBATCH --tasks=36
 #SBATCH --partition=lhpc
 

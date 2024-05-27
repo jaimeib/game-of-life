@@ -2,7 +2,7 @@
 #SBATCH --job-name=mpi-8task-n80-hard
 #SBATCH --output=SLURM/results/mpi-8task-n80-hard.out
 #SBATCH --error=SLURM/results/mpi-8task-n80-hard.err
-#SBATCH --time=00:02:00
+#SBATCH --time=00:05:00
 #SBATCH --tasks=8
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc

@@ -2,10 +2,8 @@
 #SBATCH --job-name=sec-n90
 #SBATCH --output=SLURM/results/sec-n90.out
 #SBATCH --error=SLURM/results/sec-n90.err
-#SBATCH --time=00:10:00
-#SBATCH --nodes=1
+#SBATCH --time=00:02:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc
 

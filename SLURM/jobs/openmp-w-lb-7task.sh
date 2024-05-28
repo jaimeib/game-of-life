@@ -11,5 +11,5 @@
 #SBATCH --exclusive
 #SBATCH --partition=lhpc
 
-prun PARALLEL/bin/life_load_balancing_openmp DATA/in/5000.in 5000 100
+prun PARALLEL/bin/life_load_balancing_openmp DATA/in/5000.in 5000 10
 

@@ -9,5 +9,5 @@
 #SBATCH --mem=0
 
 export OMP_NUM_THREADS=4
-prun PARALLEL/bin/life_openmp DATA/in/5000.in 5000 100
+prun PARALLEL/bin/life_openmp DATA/in/5000.in 5000 10
 

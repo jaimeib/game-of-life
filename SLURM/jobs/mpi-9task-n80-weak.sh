@@ -8,5 +8,5 @@
 #SBATCH --partition=lhpc
 #SBATCH --mem=0
 
-prun PARALLEL/bin/life_mpi DATA/in/3000.in 3000 100
+prun PARALLEL/bin/life_mpi DATA/in/3000.in 3000 10
 

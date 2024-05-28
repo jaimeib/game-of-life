@@ -8,4 +8,4 @@
 #SBATCH --nodelist=n16-93
 #SBATCH --partition=lhpc
 
-prun BASE/bin/life  DATA/in/5000.in 5000 100
+prun BASE/bin/life  DATA/in/5000.in 5000 10

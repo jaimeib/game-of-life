@@ -1,3 +1,4 @@
-[prun] Master compute host = n16-83
+[prun] Master compute host = n16-80
 [prun] Resource manager = slurm
 [prun] Launch cmd = mpirun PARALLEL/bin/life_mpi DATA/in/5000.in 5000 10 (family=openmpi4)
+1.596319

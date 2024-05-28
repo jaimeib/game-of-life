@@ -4,6 +4,7 @@
 #SBATCH --error=SLURM/results/sec-n90.err
 #SBATCH --time=00:10:00
 #SBATCH --ntasks=1
+#SBATCH --nodes=1
 #SBATCH --nodelist=n16-93
 #SBATCH --partition=lhpc
 

@@ -23,7 +23,7 @@
 #include <omp.h>
 
 #define n1680maxCPUs 20
-#define n1680usableCPUs 6
+#define n1680usableCPUs 4
 
 #endif
 

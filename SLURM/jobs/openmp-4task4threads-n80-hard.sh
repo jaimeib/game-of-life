@@ -4,6 +4,8 @@
 #SBATCH --error=SLURM/results/openmp-4task4threads-n80-hard.err
 #SBATCH --time=00:10:00
 #SBATCH --ntasks=4
+#SBATCH --cpus-per-task=4
+#SBATCH --nodes=4
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc
 

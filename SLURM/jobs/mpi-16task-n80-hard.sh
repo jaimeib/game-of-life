@@ -3,7 +3,7 @@
 #SBATCH --output=SLURM/results/mpi-16task-n80-hard.out
 #SBATCH --error=SLURM/results/mpi-16task-n80-hard.err
 #SBATCH --time=00:10:00
-#SBATCH --tasks=16
+#SBATCH --ntasks=16
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc
 

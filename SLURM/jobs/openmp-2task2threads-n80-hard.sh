@@ -3,7 +3,7 @@
 #SBATCH --output=SLURM/results/openmp-2task2threads-n80-hard.out
 #SBATCH --error=SLURM/results/openmp-2task2threads-n80-hard.err
 #SBATCH --time=00:10:00
-#SBATCH --tasks=2
+#SBATCH --ntasks=2
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc
 

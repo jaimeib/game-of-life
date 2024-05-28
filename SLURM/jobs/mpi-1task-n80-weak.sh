@@ -3,7 +3,7 @@
 #SBATCH --output=SLURM/results/mpi-1task-n80-weak.out
 #SBATCH --error=SLURM/results/mpi-1task-n80-weak.err
 #SBATCH --time=00:10:00
-#SBATCH --tasks=1
+#SBATCH --ntasks=1
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc
 

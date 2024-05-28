@@ -24,11 +24,10 @@ Cluster cluster = {
         {.hostname = "n16-82", .niceness = 3},
         {.hostname = "n16-83", .niceness = 3},
         {.hostname = "n16-90", .niceness = 1},
-        {.hostname = "n16-91", .niceness = 1},
         {.hostname = "n16-92", .niceness = 1},
         {.hostname = "n16-93", .niceness = 1},
     },
-    .size = 8,
+    .size = 7,
 };
 
 /************************************************************/
@@ -68,13 +67,6 @@ void get_hostname(char *hostname, int size)
  */
 int *load_balancing(int nprocs, int size, int rank, MPI_Comm comm)
 {
-
-    // Check if the number of processes is the cluster size
-    if (nprocs != cluster.size)
-    {
-        fprintf(stderr, "Number of processes must be equal to the cluster size\n");
-        exit(1);
-    }
 
     // Allocate memory for the niceness of each process
     int *niceness_by_rank = (int *)malloc(nprocs * sizeof(int));

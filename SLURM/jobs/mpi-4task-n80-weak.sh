@@ -6,6 +6,7 @@
 #SBATCH --ntasks=4
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc
+#SBATCH --mem=0
 
 prun PARALLEL/bin/life_mpi DATA/in/2000.in 2000 100
 

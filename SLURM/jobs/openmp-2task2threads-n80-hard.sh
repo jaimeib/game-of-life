@@ -6,6 +6,7 @@
 #SBATCH --ntasks=2
 #SBATCH --nodelist=n16-[80-83]
 #SBATCH --partition=lhpc
+#SBATCH --mem=0
 
 export OMP_NUM_THREADS=2
 prun PARALLEL/bin/life_openmp DATA/in/5000.in 5000 100

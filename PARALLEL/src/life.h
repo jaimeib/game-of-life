@@ -97,7 +97,7 @@ int *load_balancing(int nprocs, int size, int rank, MPI_Comm comm)
     // Compute the total niceness
     int total_niceness = 0;
 
-    for (int i = 0; i < cluster.size; i++)
+    for (int i = 0; i < nprocs; i++)
     {
         total_niceness += niceness_by_rank[i];
     }

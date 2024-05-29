@@ -2,7 +2,7 @@
 /* Load Balancing: Life header file                         */
 /************************************************************/
 
-/* Define cluster nodes (Dictionary mapping hostnames to frequencies) */
+/* Define cluster nodes (Dictionary mapping hostnames to niceness) */
 typedef struct
 {
     char *hostname[100];
